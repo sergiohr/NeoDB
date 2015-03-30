@@ -5,6 +5,7 @@ import ConfigParser
 import base64
 import os
 import dbutils
+import core
 
 def get_id(connection, table_name, **kwargs):
     """
