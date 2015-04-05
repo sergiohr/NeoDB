@@ -4,9 +4,8 @@ Created on Apr 20, 2014
 @author: sergio
 '''
 import psycopg2
-import neodb
 import neo.core
-import neodb.dbutils
+from .. import dbutils
 
 class SegmentDB(neo.core.Segment):
     '''
@@ -31,16 +30,16 @@ class SegmentDB(neo.core.Segment):
         if self.file_origin == None:
             raise StandardError("Segment must have a file_origin to process.")
         
-        other = neodb.get_id(connection, 'segment', name = self.file_origin)
+        other = dbutils.get_id(connection, 'segment', name = self.file_origin)
         if other != []:
             raise StandardError("There is another segment with name '%s'."%self.name)
         
         file_datetime = None
         rec_datetime = None
         if self.file_datetime:
-            file_datetime = neodb.dbutils.get_ppgdate(self.file_datetime)
+            file_datetime = dbutils.get_ppgdate(self.file_datetime)
         if self.rec_datetime:
-            rec_datetime = neodb.dbutils.get_ppgdate(self.rec_datetime)
+            rec_datetime = dbutils.get_ppgdate(self.rec_datetime)
         
         # QUERY
         cursor = connection.cursor()
@@ -58,7 +57,8 @@ class SegmentDB(neo.core.Segment):
         
         # Get ID
         id = None
-        getid = neodb.get_id(connection, 'segment', name = self.name, file_origin = self.file_origin)
+        getid = dbutils.get_id(connection, 'segment', id_block = self.id_block, name = self.name, file_origin = self.file_origin)
+        print getid
         if getid:
             [(id, _)] = getid
         

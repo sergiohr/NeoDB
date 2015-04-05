@@ -4,8 +4,8 @@ Created on Sep 8, 2014
 @author: sergio
 '''
 import neo.core
-import neodb
 import psycopg2
+from .. import dbutils
 
 class RecordingChannelDB(neo.core.RecordingChannel):
     '''
@@ -46,16 +46,16 @@ class RecordingChannelDB(neo.core.RecordingChannel):
         connection.commit()
         
         if self.id_block and self.id_recordingchannelgroup:
-            [(id, _)] = neodb.get_id(connection, 'recordingchannel',
+            [(id, _)] = dbutils.get_id(connection, 'recordingchannel',
                                      id_block = self.id_block, 
                                      id_recordingchannelgroup = self.id_recordingchannelgroup, 
                                      index = self.index)
         elif self.id_recordingchannelgroup:
-            [(id, _)] = neodb.get_id(connection, 'recordingchannel', 
+            [(id, _)] = dbutils.get_id(connection, 'recordingchannel', 
                                      id_recordingchannelgroup = self.id_recordingchannelgroup, 
                                      index = self.index)
         elif self.id_block:
-            [(id, _)] = neodb.get_id(connection, 'recordingchannel', 
+            [(id, _)] = dbutils.get_id(connection, 'recordingchannel', 
                                      id_block = self.id_block, 
                                      index = self.index)
         return id

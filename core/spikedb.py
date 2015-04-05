@@ -6,7 +6,7 @@ Created on Sep 4, 2014
 import neo.core
 import numpy
 import psycopg2
-import neodb
+from .. import dbutils
 from quantities import s
 
 class SpikeDB(neo.core.Spike):
@@ -109,12 +109,20 @@ class SpikeDB(neo.core.Spike):
         connection.commit()
         
         # Get ID
-        [(id, _)] = neodb.get_id(connection, 'spike', 
-                                 index = self.index, 
-                                 id_segment = self.id_segment)
+        try:
+            [(id, _)] = dbutils.get_id(connection, 'spike', 
+                                     index = self.index, 
+                                     id_segment = self.id_segment,
+                                     id_recordingchannel = self.id_recordingchannel)
+            self.id = id
+            return id
+        except:
+            print dbutils.get_id(connection, 'spike', 
+                                     index = self.index, 
+                                     id_segment = self.id_segment,
+                                     id_recordingchannel = self.id_recordingchannel)
         
-        self.id = id
-        return id
+
 
 def get_from_db(connection, id_block, channel, **kwargs):
     
@@ -192,7 +200,7 @@ def update(connection, id, **kwargs):
     cursor = connection.cursor()
     query = """UPDATE spike
                SET """
-    columns = neodb.column_names('spike', connection)
+    columns = dbutils.column_names('spike', connection)
     
     for parameter in kwargs.keys():
         if parameter not in columns:

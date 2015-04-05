@@ -5,9 +5,9 @@ Created on Apr 20, 2014
 '''
 
 import psycopg2
-import neodb
+
 import neo.core
-import neodb.dbutils as dbutils
+from .. import dbutils
 
 class BlockDB(neo.core.Block):
     '''
@@ -34,7 +34,7 @@ class BlockDB(neo.core.Block):
         if self.name == None:
             raise StandardError("Block Session must have a name.")
         
-        other = neodb.get_id(connection, 'block', name = self.name)
+        other = dbutils.get_id(connection, 'block', name = self.name)
         if other != []:
             raise StandardError("There is another block session with name '%s'."%self.name)
         
@@ -59,7 +59,7 @@ class BlockDB(neo.core.Block):
         connection.commit()
         
         # Get ID
-        [(id, _)] = neodb.get_id(connection, 'block', name = self.name)
+        [(id, _)] = dbutils.get_id(connection, 'block', name = self.name)
         return id
     
     def get_from_db(self, connection, id):
