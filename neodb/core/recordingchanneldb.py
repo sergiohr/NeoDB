@@ -4,8 +4,9 @@ Created on Sep 8, 2014
 @author: sergio
 '''
 import neo.core
-import neodb
 import psycopg2
+from .. import dbutils
+#import dbutils
 
 class RecordingChannelDB(neo.core.RecordingChannel):
     '''
@@ -37,6 +38,7 @@ class RecordingChannelDB(neo.core.RecordingChannel):
         if self.index == None:
             raise StandardError("RecordingChannel must have a index")
         
+        self.connection = connection
         cursor = connection.cursor()
         query = """INSERT INTO recordingchannel (id_block, id_recordingchannelgroup,
                                                  index, coordinate, name, 
@@ -46,31 +48,76 @@ class RecordingChannelDB(neo.core.RecordingChannel):
         connection.commit()
         
         if self.id_block and self.id_recordingchannelgroup:
-            [(id, _)] = neodb.get_id(connection, 'recordingchannel',
+            [(id, _)] = dbutils.get_id(connection, 'recordingchannel',
                                      id_block = self.id_block, 
                                      id_recordingchannelgroup = self.id_recordingchannelgroup, 
                                      index = self.index)
         elif self.id_recordingchannelgroup:
-            [(id, _)] = neodb.get_id(connection, 'recordingchannel', 
+            [(id, _)] = dbutils.get_id(connection, 'recordingchannel', 
                                      id_recordingchannelgroup = self.id_recordingchannelgroup, 
                                      index = self.index)
         elif self.id_block:
-            [(id, _)] = neodb.get_id(connection, 'recordingchannel', 
+            [(id, _)] = dbutils.get_id(connection, 'recordingchannel', 
                                      id_block = self.id_block, 
                                      index = self.index)
         return id
+    
+    def get_from_db(self, connection, id):
+        self.connection = connection
+        cursor = self.connection.cursor()
+        query = """ SELECT * FROM recordingchannel WHERE id = %s"""
+        cursor.execute(query, [id])
+        results = cursor.fetchall()
+        
+        if results != []:
+            self.id =             results[0][0]
+            self.index =          results[0][1]
+            self.coordinate =     results[0][2]
+            self.name =           results[0][3]
+            self.description =    results[0][4]
+            self.file_origin =    results[0][5]
+            self.id_recordingchannelgroup = results[0][7]
+            self.id_block =       results[0][6]
+        
+        results = {}
+        results['name'] = self.name
+        results['description'] = self.description
+        results['file_origin'] = self.file_origin
+        return results
+    
+    def ls_spikes(self):
+        idesr = []
+        ids = dbutils.get_id(self.connection, "spike", id_recordingchannel=self.id)
+        if ids != []:
+            for i in ids:
+                print "id:%s name:%s"%(i[0], i[1])
+                idesr.append(i[0])
+        
+        return idesr
+    
+    def get_spikes(self):
+        idesr = []
+        ids = dbutils.get_id(self.connection, "spike", id_recordingchannel=self.id)
+        if ids != []:
+            for i in ids:
+                idesr.append(i[0])
+        
+        return idesr
         
 if __name__ == '__main__':
     username = 'postgres'
     password = 'postgres'
-    host = '192.168.2.2'
+    host = '172.16.162.128'
     dbname = 'demo'
     url = 'postgresql://%s:%s@%s/%s'%(username, password, host, dbname)
     
     dbconn = psycopg2.connect('dbname=%s user=%s password=%s host=%s'%(dbname, username, password, host))
+    rc = RecordingChannelDB()
+    rc.get_from_db(dbconn, id=153)
+#     rc = RecordingChannelDB(id_block=50, index = 0)
+#     id = rc.save(dbconn)
+#     print id
+#     rc = RecordingChannelDB(index = 0)
+#     id = rc.save(dbconn)
     
-    rc = RecordingChannelDB(id_block=50, index = 0)
-    id = rc.save(dbconn)
-    print id
-    rc = RecordingChannelDB(index = 0)
-    id = rc.save(dbconn)
+    

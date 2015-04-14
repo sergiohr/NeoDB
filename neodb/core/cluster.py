@@ -5,7 +5,6 @@ Created on Jan 31, 2015
 '''
 
 import psycopg2
-import neodb
 import os
 
 def save(connection, id_block, channel, clusters):

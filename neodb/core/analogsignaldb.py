@@ -5,9 +5,8 @@ Created on Apr 21, 2014
 '''
 
 import psycopg2
-import neodb
 import neo.core
-import neodb.dbutils as dbutils
+from .. import dbutils
 from quantities import kHz, Hz, mV
 import numpy
 
@@ -69,7 +68,7 @@ class AnalogSignalDB(neo.core.AnalogSignal):
         connection.commit()
         
         # Get ID
-        [(id, _)] = neodb.get_id(connection, 'analogsignal', 
+        [(id, _)] = dbutils.get_id(connection, 'analogsignal', 
                                  name = self.name, 
                                  channel_index = self.channel_index, 
                                  id_segment = self.id_segment)
@@ -266,11 +265,6 @@ def get_from_db3(connection, id_block, recordingchannel, **kwargs):
         analogsignal.id_recordingchannel = info[6]
         analogsignal.id_segment = info[7]
         analogsignal.channel_index = info[8]
-    
-    print "Loaded succesfuly:"
-    print "Lenght: %s"%(len(signal))
-    print "Unit: %s"%units
-    print "Sampling Rate: %s"%sampling_rate
     
     return analogsignal
 

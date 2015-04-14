@@ -5,9 +5,10 @@ Created on Apr 20, 2014
 '''
 
 import psycopg2
-import neodb
+
 import neo.core
-import neodb.dbutils as dbutils
+from .. import dbutils
+import recordingchanneldb
 
 class BlockDB(neo.core.Block):
     '''
@@ -24,6 +25,7 @@ class BlockDB(neo.core.Block):
                                       file_datetime, rec_datetime, index)
         self.id_project = id_project
         self.id_individual = id_individual
+        self.id = None
         self.connection = None
     
     def save(self, connection):
@@ -34,7 +36,7 @@ class BlockDB(neo.core.Block):
         if self.name == None:
             raise StandardError("Block Session must have a name.")
         
-        other = neodb.get_id(connection, 'block', name = self.name)
+        other = dbutils.get_id(connection, 'block', name = self.name)
         if other != []:
             raise StandardError("There is another block session with name '%s'."%self.name)
         
@@ -59,19 +61,21 @@ class BlockDB(neo.core.Block):
         connection.commit()
         
         # Get ID
-        [(id, _)] = neodb.get_id(connection, 'block', name = self.name)
+        [(id, _)] = dbutils.get_id(connection, 'block', name = self.name)
+        self.id = id
         return id
     
     def get_from_db(self, connection, id):
-        connection = connection
+        self.connection = connection
         
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
         query = """ SELECT * FROM block WHERE id = %s"""
         cursor.execute(query, [id])
         results = cursor.fetchall()
         
         
         if results != []:
+            self.id =            results[0][0]
             self.name =          results[0][6]
             self.description =   results[0][7]
             self.file_origin =   results[0][8]
@@ -85,9 +89,36 @@ class BlockDB(neo.core.Block):
         results['file_datetime'] = self.file_datetime
         results['rec_datetime'] = self.rec_datetime
         
-        results['segments'] = self.__get_segments_id(id, connection)
+        results['segments'] = self.__get_segments_id(id, self.connection)
         
         return results
+    
+    def ls_channels(self):
+        idesr = []
+        if self.id != None:
+            ids = dbutils.get_id(self.connection, 'recordingchannel', id_block=self.id)
+            if ids != []:
+                for i in ids:
+                    print ("id: %s, name: %s")%(i[0],i[1])
+                    idesr.append(i[0])
+            
+        return idesr
+    
+    def get_channels(self):
+        idesr = []
+        if self.id != None:
+            ids = dbutils.get_id(self.connection, 'recordingchannel', id_block=self.id)
+            if ids != []:
+                for i in ids:
+                    idesr.append(i[0])
+            
+        return idesr
+    
+    def get_channel(self, id):
+        rc = recordingchanneldb.RecordingChannelDB()
+        rc.get_from_db(self.connection, id)
+        
+        return rc
     
     def __get_segments_id(self, id, connection):
         cursor = connection.cursor()
